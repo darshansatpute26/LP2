@@ -1,0 +1,419 @@
+Pract 1 : - DFSBFS
+
+import java.util.*;
+
+public class dfsbfs {
+
+    public static void bfs(List<List<Integer>> adj, int n, int target) {
+        List<Integer> result = new ArrayList<>();
+		Queue<Integer>	queue = new LinkedList<>();
+		boolean found = false;
+		boolean[] visited = new boolean[n+1];
+		
+		for(int i=1; i<=n;i++){
+			if(!visited[i]){
+				queue.add(i);
+				visited[i]=true;
+				while(!queue.isEmpty()){
+					int curr = queue.poll();
+					result.add(curr);
+					if(target==curr) found=true;
+					for(int neighbour : adj.get(curr)){
+						if(!visited[neighbour]){
+							queue.add(neighbour);
+							visited[neighbour]=true;
+						}
+					}
+					if(target!=-1 & found) break;
+				}
+			}
+			if(target!=-1 & found) break;
+		}
+		if(target!=-1){
+			System.out.print(found?"found \n":"Not Found \n");
+			System.out.print("The bfs traversal of "+target+" is "+ result);
+		}
+		else{
+			System.out.print("Bfs tarversal : " +result);
+		}
+	}
+
+    public static void dfsHelper(List<List<Integer>> adj, int node, boolean[] visited, List<Integer> result, int target, boolean found) {
+        if (found) return;
+
+        visited[node] = true;
+        result.add(node);
+        if (node == target) {
+            found = true;
+            return;
+        }
+
+        for (int neighbor : adj.get(node)) {
+            if (!visited[neighbor]) {
+                dfsHelper(adj, neighbor, visited, result, target, found);
+            }
+        }
+    }
+
+    public static void dfs(List<List<Integer>> adj, int n, int target) {
+        boolean[] visited = new boolean[n + 1];
+        List<Integer> result = new ArrayList<>();
+        boolean found = false;
+
+        for (int i = 1; i <= n; i++) {
+            if (!visited[i]) {
+                dfsHelper(adj, i, visited, result, target, found);
+            }
+            if (target != -1 && found) break;
+        }
+
+        if (target != -1) {
+            System.out.println(found ? "\nVertex Found" : "\nVertex Not Found");
+            System.out.println("DFS Traversal for vertex " + target + ": " + result);
+        } else {
+            System.out.println("\nDFS Traversal: " + result);
+        }
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        System.out.print("Enter number of vertices: ");
+        int n = sc.nextInt();
+        System.out.print("Enter number of edges: ");
+        int e = sc.nextInt();
+
+        List<List<Integer>> adj = new ArrayList<>();
+        for (int i = 0; i <= n; i++) {
+            adj.add(new ArrayList<>());
+        }
+
+        for (int i = 0; i < e; i++) {
+            System.out.print("Enter edge (u v): ");
+            int u = sc.nextInt();
+            int v = sc.nextInt();
+            adj.get(u).add(v);
+            adj.get(v).add(u);
+        }
+
+        System.out.println("\nGraph Adjacency List:");
+        for (int i = 1; i <= n; i++) {
+            System.out.print(i + " -> ");
+            for (int j : adj.get(i)) {
+                System.out.print(j + " ");
+            }
+            System.out.println();
+        }
+
+        bfs(adj, n, -1);
+        dfs(adj, n, -1);
+
+        while (true) {
+            System.out.print("\nEnter node to search: ");
+            int node = sc.nextInt();
+            System.out.println("1. BFS\n2. DFS\n3. Exit\nChoice: ");
+            int ch = sc.nextInt();
+
+            switch (ch) {
+                case 1:
+                    bfs(adj, n, node);
+                    break;
+                case 2:
+                    dfs(adj, n, node);
+                    break;
+                case 3:
+                    return;
+                default:
+                    System.out.println("Invalid choice");
+            }
+        }
+    }
+}
+
+
+Pract 2 : - 
+
+import java.util.*;
+
+class Node {
+    int x, y, gCost, hCost;
+    Node parent;
+
+    Node(int x, int y, int gCost, int hCost) {
+        this.x = x;
+        this.y = y;
+        this.gCost = gCost;
+        this.hCost = hCost;
+    }
+
+    int fCost() {
+        return gCost + hCost;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof Node) {
+            Node n = (Node) o;
+            return this.x == n.x && this.y == n.y;
+        }
+        return false;
+    }
+    
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(x, y);
+    }
+}
+
+public class AStar {
+
+    private static final int[][] DIRECTIONS = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+
+    public static List<Node> aStar(int[][] grid, Node start, Node goal) {
+        PriorityQueue<Node> openList = new PriorityQueue<>(Comparator.comparingInt(Node::fCost));
+        Set<Node> closedList = new HashSet<>();
+        openList.add(start);
+
+        while (!openList.isEmpty()) {
+            Node current = openList.poll();
+
+            if (current.x == goal.x && current.y == goal.y) {
+                List<Node> path = new ArrayList<>();
+                while (current != null) {
+                    path.add(current);
+                    current = current.parent;
+                }
+                Collections.reverse(path);
+                System.out.println("Total Cost: " + path.get(path.size() - 1).gCost);
+                return path;
+            }
+
+            closedList.add(current);
+
+            for (int[] dir : DIRECTIONS) {
+                int newX = current.x + dir[0], newY = current.y + dir[1];
+                if (newX < 0 || newY < 0 || newX >= grid.length || newY >= grid[0].length || grid[newX][newY] == 1)
+                    continue;
+
+                Node neighbor = new Node(newX, newY, current.gCost + 1, Math.abs(newX - goal.x) + Math.abs(newY - goal.y));
+                if (closedList.contains(neighbor)) continue;
+
+                neighbor.parent = current;
+                openList.add(neighbor);
+            }
+        }
+
+        System.out.println("No path found.");
+        return new ArrayList<>();
+    }
+
+    public static void main(String[] args) {
+        int[][] grid = {
+            {0, 0, 0, 0, 0},
+            {0, 1, 1, 1, 0},
+            {0, 0, 0, 1, 0},
+            {0, 1, 0, 0, 0},
+            {0, 0, 0, 0, 0}
+        };
+
+        Node start = new Node(0, 0, 0, 0);
+        Node goal = new Node(4, 4, 0, 0);
+
+        List<Node> path = aStar(grid, start, goal);
+        for (Node n : path)
+            System.out.println("(" + n.x + ", " + n.y + ")");
+    }
+}
+
+
+Pract 3 : - Prims MST
+
+public class PrimsMST {
+
+    private static final int V = 5; // Number of vertices
+
+    // Find the vertex with minimum key value not yet included in MST
+    int minKey(int[] key, boolean[] mstSet) {
+        int min = Integer.MAX_VALUE, minIndex = -1;
+
+        for (int v = 0; v < V; v++)
+            if (!mstSet[v] && key[v] < min) {
+                min = key[v];
+                minIndex = v;
+            }
+
+        return minIndex;
+    }
+
+    // Print the constructed MST
+    void printMST(int[] parent, int[][] graph) {
+        System.out.println("Edge \tWeight");
+        for (int i = 1; i < V; i++)
+            System.out.println(parent[i] + " - " + i + "\t" + graph[i][parent[i]]);
+    }
+
+    void primMST(int[][] graph) {
+        int[] parent = new int[V]; // Store constructed MST
+        int[] key = new int[V];    // Used to pick minimum weight edge
+        boolean[] mstSet = new boolean[V]; // To represent vertices in MST
+
+        // Initialize all keys as INFINITE
+        for (int i = 0; i < V; i++) {
+            key[i] = Integer.MAX_VALUE;
+            mstSet[i] = false;
+        }
+
+        key[0] = 0;     // Start from the first vertex
+        parent[0] = -1; // First node is always root of MST
+
+        for (int count = 0; count < V - 1; count++) {
+            int u = minKey(key, mstSet);
+            mstSet[u] = true;
+
+            for (int v = 0; v < V; v++)
+                if (graph[u][v] != 0 && !mstSet[v] && graph[u][v] < key[v]) {
+                    parent[v] = u;
+                    key[v] = graph[u][v];
+                }
+        }
+
+        printMST(parent, graph);
+    }
+
+    public static void main(String[] args) {
+        PrimsMST mst = new PrimsMST();
+        int[][] graph = {
+            {0, 2, 0, 6, 0},
+            {2, 0, 3, 8, 5},
+            {0, 3, 0, 0, 7},
+            {6, 8, 0, 0, 9},
+            {0, 5, 7, 9, 0}
+        };
+
+        mst.primMST(graph);
+    }
+}
+
+
+Pract 4 : - NQueens
+
+public class NQueens {
+
+    static final int N = 8; // Size of the chessboard (4x4)
+    static boolean[] column = new boolean[N];              // Tracks used columns
+    static boolean[] diagLeft = new boolean[2 * N];        // Tracks \ diagonals (row - col + N - 1)
+    static boolean[] diagRight = new boolean[2 * N];       // Tracks / diagonals (row + col)
+    static int[][] board = new int[N][N];                  // Chessboard (1 = queen, 0 = empty)
+
+    // Solves the N-Queens problem using backtracking + branch and bound
+    public static boolean placeQueen(int row) {
+        // Base case: all queens are placed
+        if (row == N) {
+            return true;
+        }
+
+        for (int col = 0; col < N; col++) {
+            int leftDiagIndex = row - col + N - 1;
+            int rightDiagIndex = row + col;
+
+            // Check if it's safe to place queen
+            if (!column[col] && !diagLeft[leftDiagIndex] && !diagRight[rightDiagIndex]) {
+                // Place the queen
+                board[row][col] = 1;
+                column[col] = true;
+                diagLeft[leftDiagIndex] = true;
+                diagRight[rightDiagIndex] = true;
+
+                // Recurse to next row
+                if (placeQueen(row + 1)) {
+                    return true;
+                }
+
+                // Backtrack
+                board[row][col] = 0;
+                column[col] = false;
+                diagLeft[leftDiagIndex] = false;
+                diagRight[rightDiagIndex] = false;
+            }
+        }
+
+        return false; // No valid column found in this row
+    }
+
+    // Prints the chessboard
+    public static void printBoard() {
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
+                System.out.print(board[i][j] == 1 ? "Q " : ". ");
+            }
+            System.out.println();
+        }
+    }
+
+    public static void main(String[] args) {
+        // Initialize arrays and board (Java does this by default)
+        if (placeQueen(0)) {
+            printBoard();
+        } else {
+            System.out.println("No solution found.");
+        }
+    }
+}
+
+Pract 5 : - ChatBot
+
+import java.util.Scanner;
+
+public class HospitalChatBot {
+
+    // Converts a string to lowercase
+    public static String toLower(String str) {
+        return str.toLowerCase();
+    }
+
+    // Generates a chatbot response based on user input
+    public static String chatbotResponse(String userInput) {
+        userInput = toLower(userInput);
+
+        if (userInput.contains("hello") || userInput.contains("hii")) {
+            return "Hello! Welcome to City Hospital. How can I assist you today?";
+        } else if (userInput.contains("appointment")) {
+            return "To book an appointment, please provide the department and preferred date.";
+        } else if (userInput.contains("doctor")) {
+            return "We have specialists in cardiology, pediatrics, orthopedics, and many other departments.";
+        } else if (userInput.contains("timing")) {
+            return "Our hospital is open 24/7. Outpatient consultations are from 9 AM to 5 PM.";
+        } else if (userInput.contains("emergency")) {
+            return "For emergencies, please call 911 or come directly to our emergency department.";
+        } else if (userInput.contains("insurance")) {
+            return "We accept most major insurance plans. Please contact our billing department for details.";
+        } else if (userInput.contains("location")) {
+            return "We are located at 123 Health Avenue, Medical District.";
+        } else if (userInput.contains("contact")) {
+            return "You can reach us at 1-800-HOSPITAL or email info@cityhospital.com.";
+        } else {
+            return "I'm sorry, I didn't understand that. Could you please rephrase?";
+        }
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("Welcome to the City Hospital ChatBot! Type 'exit' to end the conversation.");
+
+        while (true) {
+            System.out.print("You: ");
+            String userInput = scanner.nextLine();
+
+            String inputCheck = toLower(userInput);
+            if (inputCheck.equals("exit") || inputCheck.equals("bye")) {
+                System.out.println("Chatbot: Thank you for contacting City Hospital. Take care!");
+                break;
+            }
+
+            System.out.println("Chatbot: " + chatbotResponse(userInput));
+        }
+
+        scanner.close();
+    }
+}
